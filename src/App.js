@@ -5,6 +5,7 @@ import {GoogleOutlined, FacebookOutlined, LogoutOutlined} from '@ant-design/icon
 import {columns} from './constants/tabledata';
 import {auth, initializeFirebase} from './utils/initializeFirebase';
 import {getTableData} from './api/getTableData';
+import {app} from '../src/utils/base';
 import './App.css';
 
 initializeFirebase();
@@ -14,6 +15,7 @@ const App = () => {
   const providerGoogleAuth = new firebase.auth.GoogleAuthProvider();
   const [user, setUser] = useState(null);
   const [tableData, setTableData] = useState(null);
+  const [fileUrl, setFileUrl] = useState(null);
 
   const loginFB = () => {
     auth()
@@ -22,6 +24,7 @@ const App = () => {
         setUser(user);
       });
   };
+
   const loginGoogle = () => {
     auth()
       .signInWithPopup(providerGoogleAuth)
@@ -29,12 +32,23 @@ const App = () => {
         setUser(user);
       });
   };
+
   const logout = () => {
     auth()
       .signOut()
       .then(() => {
         setUser(null);
       });
+  };
+
+  const onChange = async e => {
+    const file = e.target.files[0];
+    const storageRef = app.storage().ref();
+    const fileRef = storageRef.child(file.name);
+    fileRef.put(file).then(data => {
+      console.log('Uploaded', data);
+    });
+    setFileUrl(await fileRef.getDownloadURL());
   };
 
   useEffect(() => {
@@ -56,6 +70,9 @@ const App = () => {
         Logout
       </Button>
       <div className='tableWrapper'>{user && <Table columns={columns} dataSource={tableData} />}</div>
+
+      <input type='file' onChange={onChange}></input>
+      <img src={fileUrl}></img>
     </div>
   );
 };
